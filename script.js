@@ -1,6 +1,5 @@
 btn.addEventListener('click', handleSubmit);
 statsBtn.addEventListener('click', printStats);
-
 id.onkeyup = handleInputChange;
 firstName.onkeyup = handleInputChange;
 lastName.onkeyup = handleInputChange;
@@ -9,6 +8,7 @@ age.onkeyup = handleInputChange;
 const persons = [];
 const data = ['id', 'first Name', 'last Name', 'age'];
 let newPerson = new Person();
+const names = Array.from(form.children);
 
 function handleInputChange(event) {
     const name = event.target.id;
@@ -16,19 +16,19 @@ function handleInputChange(event) {
 
     switch (name) {
         case 'id':
-            newPerson.id = value;
+            newPerson.id = value.trim();
             break;
 
         case 'firstName':
-            newPerson.firstName = value;
+            newPerson.firstName = value.trim();
             break;
 
         case 'lastName':
-            newPerson.lastName = value;
+            newPerson.lastName = value.trim();
             break;
 
         case 'age':
-            newPerson.age = value;
+            newPerson.age = value.trim();
             break;
 
         default:
@@ -36,28 +36,40 @@ function handleInputChange(event) {
     }
 }
 
-function handleSubmit(event) {
-    event.preventDefault();
-
+function checkValidity() {
     for (let key in newPerson) {
         if (newPerson[key] === undefined) {
             alert("You did not enter all the data, please try again.");
-            break;
+            return false;
         }
     }
-
     if (persons.findIndex(p => p.id === newPerson.id) >= 0) {
         alert("A person with this id already exists, check and enter the correct data.");
+        return false;
     }
+    return true;
+}
 
-    persons.push(newPerson);
+function handleSubmit(event) {
+    event.preventDefault();
 
-    newPerson = new Person();
-    if (document.querySelector('.blockTable') === null) {
-        createTable(persons);
-    }
-    if (persons.length) {
-        fillTable();
+    if (checkValidity()) {
+        persons.push(newPerson);
+        newPerson = new Person();
+
+        if (document.querySelector('.blockTable') === null) {
+            createTable(persons);
+        }
+
+        if (persons.length) {
+            fillTable();
+        }
+
+        names.forEach(n => {
+            if (n !== 'label' || n !== 'button' || n !== 'h3') {
+                n.value = '';
+            }
+        })
     }
 }
 
@@ -114,18 +126,29 @@ function createTableStats() {
     stats.appendChild(statsBtn);
 }
 
-function printStats() {
+function printStats(event) {
     if (persons.length) {
         const start = persons[0].age
         const minAge = persons.reduce((res, p) => p.age < res ? p.age : res, start);
         const maxAge = persons.reduce((res, p) => p.age > res ? p.age : res, start);
         const avgAge = persons.reduce((res, p) => Number(p.age) + res, 0) / persons.length;
+
         const divStats = document.createElement('div')
-        const h3avg = createInfoElement(`Average age: ${avgAge.toFixed(1)}`, 'p');
-        const h3min = createInfoElement(`Min age: ${minAge}`, 'p');
-        const h3max = createInfoElement(`Max age: ${maxAge}`, 'p');
-        divStats.append(h3avg, h3min, h3max);
-        stats.appendChild(divStats);
+        divStats.setAttribute('class', 'containerStats');
+        const pavg = createInfoElement(`Average age: ${avgAge.toFixed(1)}`, 'p');
+        pavg.setAttribute('class', 'pavg');
+        const pmin = createInfoElement(`Min age: ${minAge}`, 'p');
+        pmin.setAttribute('class', 'pmin');
+        const pmax = createInfoElement(`Max age: ${maxAge}`, 'p');
+        pmax.setAttribute('class', 'pmax');
+        divStats.append(pavg, pmin, pmax);
+
+        if (document.querySelector('.containerStats') !== null) {
+            stats.replaceChild(divStats, stats.firstElementChild);
+        } else {
+            stats.appendChild(divStats);
+        }
+
     } else {
         stats.appendChild(createInfoElement('No stats...', 'h4'));
     }
